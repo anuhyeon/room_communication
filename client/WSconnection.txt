@@ -1,0 +1,25 @@
+const WebSocket = require('ws');
+const http = require('http');
+const setupWSConnection = require('y-websocket/bin/utils').setupWSConnection;
+
+const wss = new WebSocket.Server({ noServer: true });
+
+const server = http.createServer((request, response) => {
+  response.writeHead(200, { 'Content-Type': 'text/plain' });
+  response.end('okay');
+});
+
+wss.on('connection', setupWSConnection);
+
+server.on('upgrade', (request, socket, head) => {
+  // You may check auth of request here..
+  // See https://github.com/websockets/ws#client-authentication
+  const handleAuth = (ws) => {
+    wss.emit('connection', ws, request);
+  };
+  wss.handleUpgrade(request, socket, head, handleAuth);
+});
+
+server.listen(1234, () => {
+  console.log(`WebSocket server running on port 1234`);
+});
