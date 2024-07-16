@@ -18,7 +18,7 @@ const client = createClient();
 client.on('error', console.error);
 client
   .connect()
-  .then(() => console.log('Connected to redis locally!'))
+  .then(() => console.log('Connected to redis ly!'))
   .catch(() => {
     console.error('Error connecting to redis');
   });
@@ -53,11 +53,18 @@ app.post('/create-room-with-user', async (req, res) => {
 
 io.on('connection', (socket) => {
   // 채팅 소켓 통신
-  console.log('New client connected');
+  console.log('New client connected:'+ socket.id);
+  console.log('dsdsdsdsd')
+  
 
   // 사용자가 방에서 나갈 때 Redis에서 사용자 정보를 제거하고, 방에 있는 모든 사용자에게 업데이트된 사용자 목록을 브로드캐스트 
   socket.on('DISCONNECT_FROM_ROOM', async ({ roomId, username }) => { // 사용자가 방나가기 버튼을 눌렀을때
     try {
+      console.log(`############# DISCONNECT_FROM_ROOM: roomId=${roomId}, username=${username}`);
+      // roomId와 username이 문자열인지 확인
+      if (typeof roomId !== 'string' || typeof username !== 'string') {
+        throw new Error('Invalid roomId or username');
+      }
       await client.lRem(`${roomId}:users`, 1, username);
       await client.del(socket.id);
       const users = await client.lRange(`${roomId}:users`, 0, -1);

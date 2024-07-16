@@ -3,6 +3,7 @@ import io from 'socket.io-client';
 import { useStore } from '../store';
 import { useNavigate } from 'react-router-dom';
 
+
 const ChatRoom = () => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -25,7 +26,7 @@ const ChatRoom = () => {
       setRoomId(savedRoomId);
     }
 
-    const socket = io('http://localhost:3334', {
+    const socket = io('http://192.168.1.18:3334', {
       transports: ['websocket'],
     });
     socketRef.current = socket;
@@ -55,10 +56,10 @@ const ChatRoom = () => {
 
     return () => {
       console.log(`Leaving room ${roomId}`);
-      socket.emit('DISCONNECT_FROM_ROOM', { roomId, username });
+      //socket.emit('DISCONNECT_FROM_ROOM', { roomId, username });
       socket.off();
     };
-  }, [roomId, username, setUsername, setRoomId]);
+  }, []); // oomId, username, setUsername, setRoomId
 
   const sendMessage = () => {
     if (message.trim() !== '') {
@@ -89,7 +90,7 @@ const ChatRoom = () => {
       <h2>너의 이름은 {username}</h2>
       <h2>방 ID: {roomId}</h2>
       <h2>방에 접속중인 사람 개수: <b>{users.length}</b></h2>
-      <button onClick={leaveRoom}>Leave Room</button>
+      <button onClick={leaveRoom}>나가기</button>
       <div>
         <div style={{ height: '300px', overflowY: 'scroll', border: '1px solid black' }}>
           {messages.map((msg, index) => (
@@ -104,7 +105,7 @@ const ChatRoom = () => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
         />
-        <button onClick={sendMessage}>Send</button>
+        <button onClick={sendMessage}>보내기</button>
       </div>
     </>
   );
