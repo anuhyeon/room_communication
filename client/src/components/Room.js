@@ -1,6 +1,8 @@
 import React from 'react';
 import ChatRoom from './ChatRoom';
 import RealTimeEditor from './RealTimeEditor';
+import VoiceChat from './VoiceChat';
+
 
 
 const Room = () => {
@@ -14,6 +16,10 @@ const Room = () => {
         <div style={{ flex: 1 }}>
           <RealTimeEditor />
         </div>
+        <div style={{ marginTop: '20px' }}>
+        <VoiceChat />
+        </div>
+        
       </div>
     </div>
   );

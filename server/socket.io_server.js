@@ -54,8 +54,20 @@ app.post('/create-room-with-user', async (req, res) => {
 io.on('connection', (socket) => {
   // 채팅 소켓 통신
   console.log('New client connected:'+ socket.id);
-  console.log('dsdsdsdsd')
-  
+
+  // socket.on('joinRoom', ({ roomId, username }) => {
+  //   socket.join(roomId);
+  //   socket.to(roomId).emit('userJoined', { username, socketId: socket.id, isMuted: false });
+  // });
+
+  // socket.on('toggleMute', ({ roomId, username, isMuted }) => {
+  //   io.in(roomId).emit('userMuteChanged', { username, isMuted });
+  // });
+
+  // socket.on('leaveRoom', ({ roomId, username }) => {
+  //   socket.leave(roomId);
+  //   io.in(roomId).emit('userLeft', { username });
+  // });
 
   // 사용자가 방에서 나갈 때 Redis에서 사용자 정보를 제거하고, 방에 있는 모든 사용자에게 업데이트된 사용자 목록을 브로드캐스트 
   socket.on('DISCONNECT_FROM_ROOM', async ({ roomId, username }) => { // 사용자가 방나가기 버튼을 눌렀을때
