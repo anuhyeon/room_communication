@@ -2,10 +2,10 @@ import React, { useState,  useEffect, useRef  } from 'react';
 import axios from 'axios';
 import { OpenVidu } from 'openvidu-browser';
 import { useStore } from '../store';
-import io from 'socket.io-client';
+//import io from 'socket.io-client';
 
 const SERVER_URL = 'https://api.poke-code.com:1235';
-const SOCKETIO_SERVER_URL = 'http://192.168.1.18:3334'
+//const SOCKETIO_SERVER_URL = 'http://192.168.1.18:3334'
 
 const VoiceChat = () => {
   const [sessionId, setSessionId] = useState('');
@@ -23,7 +23,7 @@ const VoiceChat = () => {
     roomId,
   }));
 
-  const socketRef = useRef(null);
+  //const socketRef = useRef(null);
 
   useEffect(() => {
     const createSession = async () => {
@@ -156,7 +156,6 @@ const VoiceChat = () => {
       const newMuteState = !isMuted;
       publisher.publishAudio(!newMuteState);
       setIsMuted(newMuteState);
-
       //socketRef.current.emit('toggleMute', { roomId, username, isMuted: newMuteState });
 
     }
@@ -166,12 +165,6 @@ const VoiceChat = () => {
     <div className="VoiceChat">
       <h1>오픈비두</h1>
       {/* <button onClick={createSession}>Create Session</button> */}
-      {/* <input
-        type="text"
-        value={sessionId}
-        onChange={(e) => setSessionId(e.target.value)}
-        placeholder="Session ID"
-      /> */}
       <button onClick={joinSession}>음성채팅 참여하기</button>
       {session && <button onClick={leaveSession}>음성채팅 나가기</button>}
       <div id="audio-container"></div>

@@ -1,5 +1,3 @@
-// 아래 코드는 ec2에서 실행 X just 테스트용
-
 var express = require("express");
 var bodyParser = require("body-parser");
 var http = require("http");

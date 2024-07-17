@@ -23,7 +23,7 @@ const Home = () => {
 
     try {
       setLoading(true);
-      const { data } = await axios.post('http://192.168.1.18:3334/create-room-with-user', {
+      const { data } = await axios.post('https://api.poke-code.com:3334/create-room-with-user', {
         username: value,
       });
       setRoomId(data.roomId);
