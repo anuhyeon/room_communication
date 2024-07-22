@@ -22,7 +22,7 @@ const VoiceChat = () => {
 
   const createSession = async () => { // 하나의 방을 만드는거랑 같다고 보면됨 해당 세션으로 접속한 사람들끼리만 음성채팅 가는
     try {
-      const response = await axios.post('https://api.poke-code.com:1235/api/sessions', { customSessionId: roomId }); // 세션 아이디를 서버로 부터 발급받음
+      const response = await axios.post('https://api.poke-code.com:1235/api/sessions', { customSessionId: roomId }); // 세션 아이디를 서버로 부터 발급받음 
       console.log('####################',response.data);
       setSessionId(response.data);
       console.log('Session created with ID: ', response.data);

@@ -26,9 +26,10 @@ const ChatRoom = () => {
       setRoomId(savedRoomId);
     }
 
-    const socket = io('https://api.poke-code.com:3334', {
+    const socket = io('http://192.168.1.18:3334', {    // 'https://api.poke-code.com:3334'
       transports: ['websocket'],
     });
+    
     socketRef.current = socket;
 
     socket.on('connect', () => {

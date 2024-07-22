@@ -4,7 +4,7 @@ import { OpenVidu } from 'openvidu-browser';
 import { useStore } from '../store';
 //import io from 'socket.io-client';
 
-const SERVER_URL = 'https://api.poke-code.com:1235';
+const SERVER_URL = 'https://api.poke-code.com:1235';  // api.poke-code.com
 //const SOCKETIO_SERVER_URL = 'http://192.168.1.18:3334'
 
 const VoiceChat = () => {
