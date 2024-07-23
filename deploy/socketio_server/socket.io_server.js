@@ -11,10 +11,16 @@ const PORT = 3334;
 const moment = require('moment');
 const mysql = require('mysql2/promise');
 
-const DB_HOST = process.env.DB_HOST;
-const DB_USERNAME = process.env.DB_USERNAME;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_NAME = process.env.DB_NAME;
+
+// const DB_HOST = process.env.DB_HOST;
+// const DB_USERNAME = process.env.DB_USERNAME;
+// const DB_PASSWORD = process.env.DB_PASSWORD;
+// const DB_NAME = process.env.DB_NAME;
+
+const DB_HOST = '52.79.197.126'
+const DB_USERNAME = 'sunkue'
+const DB_PASSWORD = 'Tjsrb123!@'
+const DB_NAME = 'myweapon'
 
 const pool = mysql.createPool({ // createconnection을 사용하는 것보다 createpool을 사용해서 DB를 제어하는게 더 효율적
   host: DB_HOST,
@@ -236,8 +242,10 @@ io.on('connection', (socket) => {
       connection = await pool.getConnection();
       await connection.beginTransaction();
       // room_id와 nick_name을 기반으로 강퇴 시킬 유저의 socket_id 추출
-      const [[{forced_out_socketId}]] = await connection.query('SELECT socket_id FROM reviewer WHERE room_id = ? AND nick_name = ?', [room_id, nick_name]);
-      console.error('Error - 강제퇴장 :',forced_out_socketId);
+      const [forced_out_socketId] = await connection.query('SELECT socket_id FROM reviewer WHERE room_id = ? AND nick_name = ?', [room_id, nick_name]);
+      console.log('강퇴 :',forced_out_socketId);
+
+      //console.error('Error - 강제퇴장 :',forced_out_socketId);
       // 리뷰어 목록에서 강퇴자 삭제
       await connection.query('DELETE FROM reviewer WHERE room_id = ? AND nick_name = ?', [room_id, nick_name]);
       // 강퇴후 방에 남아있는 유저 목록 추출
@@ -264,8 +272,8 @@ io.on('connection', (socket) => {
       io.in(roomName).emit('ROOM:CONNECTION', processedUsers);
 
       // 강퇴 당한 유저에게 강퇴되었음을 알리고 연결 끊기
-      io.to(forced_out_socketId).emit('USER:FORCED_OUT'); // 클라이언트 단에서 넣어줄것
-      io.sockets.sockets.get(forced_out_socketId)?.disconnect(); // io는 Socket.IO 서버 인스턴스 -> io.sockets는 현재 연결된 모든 소켓의 컬렉션을 포함하는 객체 -> io.sockets.sockets는 각 개별 소켓 인스턴스를 socket.id를 키로 가지는 맵객체
+      io.to(forced_out_socketId[0].socket_id).emit('USER:FORCED_OUT'); // 클라이언트 단에서 넣어줄것
+      io.sockets.sockets.get(forced_out_socketId[0].socket_id)?.disconnect(); // io는 Socket.IO 서버 인스턴스 -> io.sockets는 현재 연결된 모든 소켓의 컬렉션을 포함하는 객체 -> io.sockets.sockets는 각 개별 소켓 인스턴스를 socket.id를 키로 가지는 맵객체
      
     } catch (err) {
       if (connection) {
