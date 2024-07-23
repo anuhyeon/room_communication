@@ -167,20 +167,25 @@ io.on('connection', (socket) => {
       connection = await pool.getConnection();
       await connection.beginTransaction();
       await connection.query('INSERT INTO reviewer (room_id, bakjoon_id, nick_name, socket_id, cur_poke_id ) VALUES (?,?,?,?,?)', [room_id, bakjoon_id, nick_name, socket.id, cur_poke_id]);
-      const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]); // 현재 해당 방에 참여한 클라이언트들의 정보 가져옴, 채팅방에서 user정보를 표현할 것은 nick_name이기때문에 nick_name 가져옴
-      
-      // // 유저 스탯 정보 추가 로직
-      // const [user_status] = await connection.query('SELECT FROM exp_by_type WHERE backjoon_id = ?', [backjoon_id]);
-      // // 데이터를 하나의 객체로 결합
-      // const data = {
-      //   users,
-      //   user_status
-      // };
+      //const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]); // 현재 해당 방에 참여한 클라이언트들의 정보 가져옴, 채팅방에서 user정보를 표현할 것은 nick_name이기때문에 nick_name 가져옴
+      const [users] = await connection.query(` SELECT * FROM reviewer a LEFT OUTER JOIN exp_by_type b ON a.bakjoon_id = b.bakjoon_id WHERE a.room_id = ?`, [room_id]);
 
       const roomName = `ROOM:${room_id}`;
       console.log(users);
+
+      // 모든 exp 정보를 100으로 나눠서 처리 GPT게이
+      const processedUsers = users.map(user => ({
+        ...user,
+        math_exp: Math.floor(user.math_exp / 100),
+        impl_exp: Math.floor(user.impl_exp / 100),
+        dp_exp: Math.floor(user.dp_exp / 100),
+        data_exp: Math.floor(user.data_exp / 100),
+        graph_exp: Math.floor(user.graph_exp / 100)
+      }));
+
+
       socket.join(roomName); // 현재 소켓(클라이언트)를 roomName이라는 방에 추가 -> socket.io에서 방(room)을 사용하면 특정 그룹의 클라이언트에게만 이벤트를 보낼 수있음!
-      io.in(roomName).emit('ROOM:CONNECTION', users); // 해당 방(roomName)에 있는 모든 클라이언트에게 ROOM:CONNECTION 이벤트를 발생시키고, users 데이터를 보냄
+      io.in(roomName).emit('ROOM:CONNECTION', processedUsers); // 해당 방(roomName)에 있는 모든 클라이언트에게 ROOM:CONNECTION 이벤트를 발생시키고, users 데이터를 보냄
       await connection.commit();// connection.release()는 호출되지만, 트랜잭션이 중단되지 않고 커밋되지 않아서 데이터베이스 상태가 원치 않는 상태로 남아있었던 것!
       const [messages] = await connection.query('SELECT nick_name, message, timestamp FROM chat WHERE room_id = ?', [room_id]);
       socket.emit('ROOM:MESSAGES', messages);
@@ -233,12 +238,24 @@ io.on('connection', (socket) => {
       // 리뷰어 목록에서 강퇴자 삭제
       await connection.query('DELETE FROM reviewer WHERE room_id = ? AND nick_name = ?', [room_id, nick_name]);
       // 강퇴후 방에 남아있는 유저 목록 추출
-      const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]);
+      //const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]);
+      const [users] = await connection.query(` SELECT * FROM reviewer a LEFT OUTER JOIN exp_by_type b ON a.bakjoon_id = b.bakjoon_id WHERE a.room_id = ?`, [room_id]);
+
       await connection.commit();
+
+      // 모든 exp 정보를 100으로 나눠서 처리 GPT게이
+      const processedUsers = users.map(user => ({
+        ...user,
+        math_exp: Math.floor(user.math_exp / 100),
+        impl_exp: Math.floor(user.impl_exp / 100),
+        dp_exp: Math.floor(user.dp_exp / 100),
+        data_exp: Math.floor(user.data_exp / 100),
+        graph_exp: Math.floor(user.graph_exp / 100)
+      }));
 
       // 방에서 나간 후 갱신된 방 참여자목록을 모든 클라이언트에게 전달
       const roomName = `ROOM:${room_id}`;
-      io.in(roomName).emit('ROOM:CONNECTION', users);
+      io.in(roomName).emit('ROOM:CONNECTION', processedUsers);
 
       // 강퇴 당한 유저에게 강퇴되었음을 알리고 연결 끊기
       io.to(forced_out_socketId).emit('USER:FORCED_OUT'); // 클라이언트 단에서 넣어줄것
@@ -266,7 +283,8 @@ io.on('connection', (socket) => {
       await connection.beginTransaction();
       await connection.query('DELETE FROM reviewer WHERE room_id = ? AND nick_name = ?', [room_id, nick_name]);
       
-      const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]); //reviewer 테이블에서 특정 room_id에 속하는 모든 사용자의 nick_name 을 가져옴. -> 삭제된 이후 다시 조회해서 클라이언트들에게 뿌려줌.
+      //const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]); //reviewer 테이블에서 특정 room_id에 속하는 모든 사용자의 nick_name 을 가져옴. -> 삭제된 이후 다시 조회해서 클라이언트들에게 뿌려줌.
+      const [users] = await connection.query(` SELECT * FROM reviewer a LEFT OUTER JOIN exp_by_type b ON a.bakjoon_id = b.bakjoon_id WHERE a.room_id = ?`, [room_id]);
 
       // 해당 방에 참여자가 아무도 없을 경우 방 폭파
       if (users.length === 0) {
@@ -276,9 +294,21 @@ io.on('connection', (socket) => {
         
       }
 
+      // 모든 exp 정보를 100으로 나눠서 처리 GPT게이
+      const processedUsers = users.map(user => ({
+        ...user,
+        math_exp: Math.floor(user.math_exp / 100),
+        impl_exp: Math.floor(user.impl_exp / 100),
+        dp_exp: Math.floor(user.dp_exp / 100),
+        data_exp: Math.floor(user.data_exp / 100),
+        graph_exp: Math.floor(user.graph_exp / 100)
+      }));
+
+
+
       const roomName = `ROOM:${room_id}`;
       socket.leave(roomName);
-      io.in(roomName).emit('ROOM:CONNECTION', users);
+      io.in(roomName).emit('ROOM:CONNECTION', processedUsers);
       await connection.commit();
       console.log(`${nick_name} left room ${room_id}`);
     } catch (err) {
@@ -305,16 +335,26 @@ io.on('connection', (socket) => {
         const { room_id, nick_name } = rows[0];
         await connection.query('DELETE FROM reviewer WHERE room_id = ? AND nick_name = ?', [room_id, nick_name]);
         //socket.leave(roomName); -> disconnect 이벤트는 서버가 직접 소켓연결을 끊어주는 것이아니라 네트워크 문제나 새로고침으로 알아서 끊기기 때문에 이 코드는 작성할 필요X
-        const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]);
-
+        //const [users] = await connection.query('SELECT nick_name, cur_poke_id FROM reviewer WHERE room_id = ?', [room_id]);
+        const [users] = await connection.query(` SELECT * FROM reviewer a LEFT OUTER JOIN exp_by_type b ON a.bakjoon_id = b.bakjoon_id WHERE a.room_id = ?`, [room_id]);
         // 해당 방에 참여자가 아무도 없을 경우 방 폭파
         if (users.length === 0) {  
           await connection.query('DELETE FROM chat WHERE room_id = ?', [room_id])
           await connection.query('DELETE FROM review WHERE room_id = ?', [room_id]); // 리뷰 테이블의 해당 방 레코드 제거
         }
 
+          // 모든 exp 정보를 100으로 나눠서 처리 GPT게이
+        const processedUsers = users.map(user => ({
+          ...user,
+          math_exp: Math.floor(user.math_exp / 100),
+          impl_exp: Math.floor(user.impl_exp / 100),
+          dp_exp: Math.floor(user.dp_exp / 100),
+          data_exp: Math.floor(user.data_exp / 100),
+          graph_exp: Math.floor(user.graph_exp / 100)
+        }));
+
         const roomName = `ROOM:${room_id}`;
-        io.in(roomName).emit('ROOM:CONNECTION', users); // 리뷰어 나간 후 갱신된 방 참여자목록을.
+        io.in(roomName).emit('ROOM:CONNECTION', processedUsers); // 리뷰어 나간 후 갱신된 방 참여자목록을.
         console.log(`${nick_name} disconnected from room ${room_id}`);
       }
 
@@ -337,18 +377,3 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-
-// const [rows] = await connection.query('SELECT room_id, nick_name FROM reviewer WHERE socket_id = ?', [socket.id]); // socket.id를 통해서 room_id와 nick_name을 추출
-// [rows] = [
-      //  [
-      //   { 
-      //     room_id: '456456',
-      //     nick_name: 'JohnDoe',
-      //    },
-      //   { 
-      //     room_id: '789789',
-      //     nick_name: 'JaneSmith' 
-      //   }
-      //   ]
-      //  ]  
